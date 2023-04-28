@@ -1,0 +1,7 @@
+black~=23.3
+isort~=5.12
+flake8~=6.0
+bandit~=1.7
+
+sagemaker[local]==2.150.0
+scikit-learn==1.2.1
