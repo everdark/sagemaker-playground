@@ -44,22 +44,28 @@ def predict_fn(data: pd.DataFrame, model: BaseEstimator) -> pd.DataFrame:
 def input_fn(input_data: StreamingBody, content_type: ContentType) -> pd.DataFrame:
     """Input function for processing incoming data before model prediction."""
     label_name = "species"
+    supported_types = [c.value for c in ContentType]
+    if content_type not in supported_types:
+        raise ValueError(
+            f"content type should be one of: {supported_types}"
+            f"received '{content_type}' instead"
+        )
+
     if content_type == ContentType.parquet:
         data = BytesIO(input_data)
         df = pd.read_parquet(data)
     elif content_type == ContentType.csv:
+        # assume the csv has a header row
         df = pd.read_csv(StringIO(input_data))
     elif content_type == ContentType.json:
         df = pd.json_normalize(json.loads(input_data))
+    elif content_type == ContentType.jsonline:
+        df = pd.read_json(input_data, lines=True)
     else:
-        raise ValueError(
-            f"content type should be one of: {[c.value for c in ContentType]}"
-        )
+        raise ValueError(f"method not implemented for '{content_type}'")
 
     if label_name in df.columns:
         df = df.drop(columns=[label_name])
-
-    print(df)
 
     return df
 

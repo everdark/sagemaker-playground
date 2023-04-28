@@ -37,3 +37,12 @@ curl --location '127.0.0.1:8080/invocations' \
 --data 'sepal_length,sepal_width,petal_length,petal_width
 1,1,1,1'
 ```
+
+Or `application/jsonlines`:
+
+```bash
+curl --location '127.0.0.1:8080/invocations' \
+--header 'Content-Type: application/jsonlines' \
+--data '{"sepal_length": 1, "sepal_width": 1, "petal_length": 1, "petal_width": 1}
+{"sepal_length": 1, "sepal_width": 1, "petal_length": 1, "petal_width": 1}'
+```
