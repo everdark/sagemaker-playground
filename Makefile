@@ -12,4 +12,4 @@ install-dep:
 	@pip install -r requirements.txt
 
 model-package:
-	tar -czf model.tar.gz models
+	tar -czf model.tar.gz models mms_user_module.py

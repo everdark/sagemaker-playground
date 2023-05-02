@@ -4,7 +4,9 @@ The repository contains codes playing around with AWS SageMaker.
 
 ## Local Mode
 
-Deploy a pre-trained scikit-learn model (NOT trained by SageMaker) to an local endpoint.
+Deploy a pre-trained scikit-learn model (NOT trained by SageMaker SDK) to an local endpoint.
+This is especially useful when testing the user module for model inference task.
+The endpoint will be run by a docker container listening locally for HTTP request for model invocation.
 
 ```bash
 # train a model
@@ -17,7 +19,7 @@ make model-package
 ./deploy
 ```
 
-Now test model inference with `application/json` type:
+To test model inference with `application/json` type:
 
 ```bash
 curl --location '127.0.0.1:8080/invocations' \

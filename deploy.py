@@ -4,6 +4,7 @@ import pathlib
 
 import sagemaker
 from sagemaker.deserializers import JSONDeserializer
+from sagemaker.local import LocalSession
 from sagemaker.serializers import JSONSerializer
 from sagemaker.sklearn.model import SKLearnModel, SKLearnPredictor
 
@@ -14,6 +15,7 @@ def deploy_local_model(
     model_data_uri: str,
     entry_point: str,
     endpoint_name: str = "test_model",
+    full_local_mode: bool = True,
 ) -> SKLearnPredictor:
     """Deploy a pre-trained model to SageMaker local endpoint.
 
@@ -51,6 +53,7 @@ def deploy_local_model(
         role=iam_role,
         # under the hood, this entrypoint module will be pacakged as sourcedir.tar.gz
         # and upload to a templated s3 path under the running aws account
+        # if we are not running full local mode (local_code + local_mode)
         # the container will then download the package and install it as a standalone
         # python package under /opt/ml/code
         # this is refered to as the "script mode" in the aws docs
@@ -59,15 +62,30 @@ def deploy_local_model(
         # for more details:
         #   https://github.com/aws/sagemaker-scikit-learn-container
         entry_point=entry_point,
+        # if we do full local mode, this arg is REQUIRED and all scripts under this
+        # dir will be treated as module, under BOTH /opt/ml/code and /opt/ml/model
+        # if we only do local_mode but not local_code, the directory where this calling
+        # module is located will be mounted onto ONLY /opt/ml/model, and
+        # /opt/ml/code will contain only the user module script
+        source_dir="./code" if full_local_mode else None,
         image_uri=None,  # a default sklearn image will be downloaded (if not cached)
         framework_version="1.2-1",
     )
+
+    # to make sure the session is fully local
+    # without this, user module will be packaged and upload to s3 everytime
+    # when deploy is called (refer to docs of the arg code_location for details)
+    if full_local_mode:
+        sagemaker_session = LocalSession()
+        sagemaker_session.config = {"local": {"local_code": True}}
+        model.sagemaker_session = sagemaker_session
+
     predictor = model.deploy(
         initial_instance_count=1,
-        instance_type="local",
+        instance_type="local",  # a local sagemaker session will be automatically init
         endpoint_name=endpoint_name,
         # the serializer/deserializer will be convenient ONLY if we want to call
-        # the predictor.predict method directly
+        # the .predict() method directly
         serializer=JSONSerializer(),
         deserializer=JSONDeserializer(),
     )
